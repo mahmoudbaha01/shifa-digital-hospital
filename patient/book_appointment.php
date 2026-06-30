@@ -1,33 +1,56 @@
 <?php
 session_start();
+require_once '../includes/header.php';
 require_once '../config/db.php';
-if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'patient') { header("Location: ../login.php"); exit(); }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // المريض يحجز موعداً لنفسه، لذا نأخذ الـ ID من الجلسة
-    $stmt = $pdo->prepare("INSERT INTO appointments (patient_id, appointment_date, status, medical_notes) VALUES (?, ?, 'pending', ?)");
-    $stmt->execute([$_SESSION['user_id'], $_POST['date'], 'طلب حجز جديد']);
-    $success = "تم إرسال طلب الحجز بنجاح!";
+// التأكد من أن المستخدم مريض
+if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'patient') {
+    header("Location: ../login.php");
+    exit();
 }
+
+// معالجة البيانات داخل نفس الصفحة
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $doctor_id = $_POST['doctor_id'];
+    $appointment_date = $_POST['appointment_date'];
+    $patient_id = $_SESSION['user_id'];
+
+    $stmt = $pdo->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, status) VALUES (?, ?, ?, 'pending')");
+    $stmt->execute([$patient_id, $doctor_id, $appointment_date]);
+    
+    // إعادة توجيه بعد الحفظ
+    header("Location: dashboard.php");
+    exit();
+}
+
+// جلب قائمة الأطباء
+$stmt = $pdo->query("SELECT id, name FROM users WHERE role = 'doctor'");
+$doctors = $stmt->fetchAll();
 ?>
 
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-    <div class="container mt-5">
-        <div class="card p-4">
-            <h3>طلب حجز موعد جديد</h3>
-            <?php if(isset($success)) echo "<div class='alert alert-success'>$success</div>"; ?>
-            <form method="POST">
-                <label>اختر تاريخ ووقت الموعد:</label>
-                <input type="datetime-local" name="date" class="form-control mb-3" required>
-                <button type="submit" class="btn btn-primary">إرسال الطلب</button>
+<div class="container mt-5">
+    <div class="card shadow-sm col-md-8 mx-auto">
+        <div class="card-header bg-primary text-white">
+            <h4>حجز موعد جديد</h4>
+        </div>
+        <div class="card-body">
+            <form action="" method="POST">
+                <div class="mb-3">
+                    <label class="form-label">اختر الطبيب</label>
+                    <select name="doctor_id" class="form-select" required>
+                        <?php foreach ($doctors as $d): ?>
+                            <option value="<?php echo $d['id']; ?>"><?php echo htmlspecialchars($d['name']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">تاريخ الموعد</label>
+                    <input type="datetime-local" name="appointment_date" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">تأكيد الحجز</button>
             </form>
-            <a href="dashboard.php" class="btn btn-secondary mt-2">العودة للوحة التحكم</a>
         </div>
     </div>
-</body>
-</html>
+</div>
+
+<?php require_once '../includes/footer.php'; ?>

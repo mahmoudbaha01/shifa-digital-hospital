@@ -1,7 +1,6 @@
 <?php
 // hospital/admin/dashboard.php
 
-// 1. بدء الجلسة وفحص الصلاحيات (الأمان وحماية الأدوار)
 session_start();
 
 // التحقق من أن المستخدم مسجل دخوله وأن صلاحيته "admin" حصراً
@@ -40,7 +39,6 @@ require_once '../includes/header.php';
 ?>
 
 <div class="row">
-    <!-- القائمة الجانبية للمسؤول (تمت إضافة زر إدارة المرضى وتحديث الروابط) -->
     <div class="col-md-3 mb-4">
         <div class="card main-card p-3 bg-white">
             <h5 class="text-secondary border-bottom pb-2 mb-3">إدارة النظام</h5>
